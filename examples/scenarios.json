@@ -1,0 +1,87 @@
+[
+  {
+    "id": "psi-0001",
+    "roadConfiguration": {
+      "roadWidth": 14.0,
+      "nEgoDirectionLanes": 2,
+      "nEgoOppositeDirectionLanes": 2
+    },
+    "egoConfiguration": {
+      "egoLaneWrtCenter": 0,
+      "egoSpeedStart": 13.89,
+      "egoSpeedEnd": 13.89
+    },
+    "path": [
+      {
+        "location": {
+          "laneId": -1,
+          "laneSection": "RIGHT", 
+          "distanceToInitialEgo": -5.0,
+          "distanceToEgo": -5.0
+        },
+        "behavior": {
+          "speed": 1.4
+        }
+      },
+      {
+        "location": {
+          "laneId": 0,
+          "laneSection": "MIDDLE",
+          "distanceToInitialEgo": 10.0,
+          "distanceToEgo": 10.0  
+        },
+        "behavior": {
+          "speed": 1.4
+        }
+      },
+      {
+        "location": {
+          "laneId": 1,
+          "laneSection": "LEFT",
+          "distanceToInitialEgo": 25.0,
+          "distanceToEgo": 25.0
+        },
+        "behavior": {
+          "speed": 1.4
+        }
+      }
+    ]
+  },
+  {
+    "id": "psi-0002", 
+    "roadConfiguration": {
+      "roadWidth": 10.5,
+      "nEgoDirectionLanes": 1,
+      "nEgoOppositeDirectionLanes": 2
+    },
+    "egoConfiguration": {
+      "egoLaneWrtCenter": 0,
+      "egoSpeedStart": 11.11,
+      "egoSpeedEnd": 11.11
+    },
+    "path": [
+      {
+        "location": {
+          "laneId": -2,
+          "laneSection": "LEFT",
+          "distanceToInitialEgo": -10.0,
+          "distanceToEgo": -10.0
+        },
+        "behavior": {
+          "speed": 1.2
+        }
+      },
+      {
+        "location": {
+          "laneId": 0,
+          "laneSection": "RIGHT", 
+          "distanceToInitialEgo": 5.0,
+          "distanceToEgo": 5.0
+        },
+        "behavior": {
+          "speed": 1.2
+        }
+      }
+    ]
+  }
+]
