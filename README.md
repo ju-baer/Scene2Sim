@@ -2,12 +2,13 @@
 **Annotation-Native Minimal AV Simulator**
 
 <div align="center">
-<img src="logo.png" alt="Scene2Sim Logo" width="200"/>
+    
+<img src="logo.png" alt="Scene2Sim Logo" width="300"/>
+
 *A lightweight, annotation-native simulator that replays and perturbs real-world scenes from dataset labels—fast, deterministic, and research-oriented.*
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Paper](https://img.shields.io/badge/paper-arXiv-red.svg)](https://arxiv.org)
 [![Demo](https://img.shields.io/badge/demo-interactive-green.svg)](#-quick-demo)
 
 </div>
