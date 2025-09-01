@@ -37,14 +37,14 @@
 ### **Installation**
 ```bash
 # Clone repository
-git clone https://github.com/your-org/adsimlite.git
+git clone https://github.com/ju-baer/Scene2Sim.git
 cd Scene2Sim
 
 # Install with dependencies
 pip install -e ".[full]"
 
 # Verify installation
-python -c "import adsimlite; print(' Installation successful!')"
+python -c "import Scene2Sim; print(' Installation successful!')"
 ```
 
 ### **30-Second Demo**
