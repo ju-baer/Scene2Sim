@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-Get AD-SimLite running in 5 minutes with this step-by-step guide.
+Get Scene2Sim running in 5 minutes with this step-by-step guide.
 
 ## Installation
 
