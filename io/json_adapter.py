@@ -4,6 +4,7 @@ Adapter for loading scenarios from JSON annotations.
 import json
 from typing import Dict, List
 from pathlib import Path
+import numpy as np
 
 from ..core.scene import (Scene, Agent, Trajectory, Waypoint, 
                          RoadConfiguration, AgentType, LaneSection)
