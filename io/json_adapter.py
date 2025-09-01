@@ -129,4 +129,5 @@ class JSONAdapter:
 
 # Convenience function
 def load_scenario(filepath: str, scenario_id: str) -> Scene:
-    """Load scenario
+    """Load scenario from JSON file."""
+    return JSONAdapter.load_from_file(filepath, scenario_id)
