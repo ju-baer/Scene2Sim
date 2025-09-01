@@ -1,0 +1,76 @@
+[
+  {
+    "id": "crossing_001",
+    "roadConfiguration": {
+      "roadWidth": 7.0,
+      "nEgoDirectionLanes": 1,
+      "nEgoOppositeDirectionLanes": 1
+    },
+    "egoConfiguration": {
+      "egoLaneWrtCenter": 0,
+      "egoSpeedStart": 13.89,
+      "egoSpeedEnd": 13.89
+    },
+    "path": [
+      {
+        "location": {
+          "laneId": -1,
+          "laneSection": "MIDDLE",
+          "distanceToInitialEgo": -5.0,
+          "distanceToEgo": -5.0
+        },
+        "behavior": {
+          "speed": 1.4
+        }
+      },
+      {
+        "location": {
+          "laneId": 0,
+          "laneSection": "MIDDLE",
+          "distanceToInitialEgo": 15.0,
+          "distanceToEgo": 15.0
+        },
+        "behavior": {
+          "speed": 1.4
+        }
+      }
+    ]
+  },
+  {
+    "id": "crossing_002",
+    "roadConfiguration": {
+      "roadWidth": 10.5,
+      "nEgoDirectionLanes": 2,
+      "nEgoOppositeDirectionLanes": 1
+    },
+    "egoConfiguration": {
+      "egoLaneWrtCenter": 0,
+      "egoSpeedStart": 11.11,
+      "egoSpeedEnd": 11.11
+    },
+    "path": [
+      {
+        "location": {
+          "laneId": -1,
+          "laneSection": "RIGHT",
+          "distanceToInitialEgo": -8.0,
+          "distanceToEgo": -8.0
+        },
+        "behavior": {
+          "speed": 1.2
+        }
+      },
+      {
+        "location": {
+          "laneId": 1,
+          "laneSection": "LEFT",
+          "distanceToInitialEgo": 18.0,
+          "distanceToEgo": 18.0
+        },
+        "behavior": {
+          "speed": 1.3
+        }
+      }
+    ]
+  }
+]
