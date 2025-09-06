@@ -1,33 +1,45 @@
 """
-Scene2Sim: Annotation-Native Minimal AV Simulator
+Scene2Sim: Advanced Scene Analysis and Simulation System
 
-A lightweight, annotation-native simulator for autonomous vehicle research
-that enables fast, deterministic replay and systematic perturbation of 
-real-world scenarios.
+A comprehensive toolkit for transforming images and videos into interactive
+3D simulations through computer vision and physics-based modeling.
 """
 
 __version__ = "0.1.0"
-__author__ = "S M Jubaer"
+__author__ = "Scene2Sim Team"
 
-# Core exports
-from .core.scene import Scene, Agent, Trajectory, Waypoint, RoadConfiguration, AgentType
-from .core.simulator import ADSimulator, SimulationLog
-from .core.perturbations import PerturbationEngine
+# Core imports
+from .core.scene import Scene, SceneObject, Camera
+from .core.simulator import Simulator, SimulationResult
+from .io.loaders import load_image, load_video, load_scene
+from .analysis.scene_understanding import SceneAnalyzer
 
-# IO exports  
-from .io.json_adapter import load_scenario
+# Convenience functions
+def quick_analyze(image_path: str, **kwargs) -> Scene:
+    """Quick scene analysis from image path."""
+    return load_image(image_path, analyze=True, **kwargs)
 
-# Metrics exports
-from .metrics.safety import SafetyMetrics
+def quick_simulate(scene: Scene, duration: float = 10.0, **kwargs) -> SimulationResult:
+    """Quick simulation of a scene."""
+    simulator = Simulator(scene, **kwargs)
+    return simulator.run(duration)
 
+# Main API exports
 __all__ = [
     # Core classes
-    'Scene', 'Agent', 'Trajectory', 'Waypoint', 'RoadConfiguration', 'AgentType',
-    'ADSimulator', 'SimulationLog', 'PerturbationEngine',
+    "Scene",
+    "SceneObject", 
+    "Camera",
+    "Simulator",
+    "SimulationResult",
+    "SceneAnalyzer",
     
-    # IO functions
-    'load_scenario',
+    # Loading functions
+    "load_image",
+    "load_video", 
+    "load_scene",
     
-    # Metrics
-    'SafetyMetrics',
+    # Convenience functions
+    "quick_analyze",
+    "quick_simulate",
 ]
