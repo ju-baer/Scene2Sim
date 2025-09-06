@@ -10,7 +10,6 @@ setup(
     name="scene2sim",
     version="0.1.0",
     author="Scene2Sim Team",
-    author_email="contact@scene2sim.com",
     description="Advanced scene analysis and simulation system",
     long_description=long_description,
     long_description_content_type="text/markdown",
