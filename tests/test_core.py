@@ -1,230 +1,145 @@
 """
-Unit tests for core AD-SimLite functionality.
+Core functionality tests.
 """
 import pytest
 import numpy as np
-from adsimlite.core.scene import (
-    Scene, Agent, Trajectory, Waypoint, RoadConfiguration, 
-    AgentType, LaneSection
-)
-from adsimlite.core.simulator import ADSimulator
-from adsimlite.core.perturbations import PerturbationEngine
+from scene2sim.core.scene import Scene, SceneObject, Vector3D, ObjectType
+from scene2sim.core.simulator import Simulator
+from scene2sim.core.perturbations import PerturbationEngine
 
-class TestRoadConfiguration:
-    """Test road geometry and lane mapping."""
+def test_vector3d_operations():
+    """Test Vector3D mathematical operations."""
+    v1 = Vector3D(1, 2, 3)
+    v2 = Vector3D(4, 5, 6)
     
-    def test_lane_width_calculation(self):
-        """Test lane width computation."""
-        road = RoadConfiguration(width=14.0, n_ego_lanes=2, n_opposite_lanes=2)
-        assert road.lane_width == 3.5
+    # Addition
+    v3 = v1 + v2
+    assert v3.x == 5 and v3.y == 7 and v3.z == 9
     
-    def test_ego_lane_centers(self):
-        """Test ego direction lane center positions."""
-        road = RoadConfiguration(width=14.0, n_ego_lanes=2, n_opposite_lanes=2)
-        
-        # Lane 0 (rightmost ego lane)
-        assert road.get_lane_center_y(0) == 1.75
-        
-        # Lane 1 (leftmost ego lane) 
-        assert road.get_lane_center_y(1) == 5.25
+    # Subtraction
+    v4 = v2 - v1
+    assert v4.x == 3 and v4.y == 3 and v4.z == 3
     
-    def test_opposite_lane_centers(self):
-        """Test opposite direction lane center positions."""
-        road = RoadConfiguration(width=14.0, n_ego_lanes=2, n_opposite_lanes=2)
-        
-        # Lane -1 (closest opposite lane)
-        assert road.get_lane_center_y(-1) == -1.75
-        
-        # Lane -2 (farthest opposite lane)
-        assert road.get_lane_center_y(-2) == -5.25
+    # Scalar multiplication
+    v5 = v1 * 2
+    assert v5.x == 2 and v5.y == 4 and v5.z == 6
     
-    def test_section_offsets(self):
-        """Test lane section offset calculation."""
-        road = RoadConfiguration(width=14.0, n_ego_lanes=2, n_opposite_lanes=2)
-        
-        half_lane = road.lane_width * 0.5  # 1.75
-        quarter_lane = half_lane * 0.25    # 0.4375
-        
-        assert road.get_section_offset(LaneSection.LEFT) == quarter_lane
-        assert road.get_section_offset(LaneSection.MIDDLE) == 0.0
-        assert road.get_section_offset(LaneSection.RIGHT) == -quarter_lane
+    # Magnitude
+    v6 = Vector3D(3, 4, 0)
+    assert v6.magnitude() == 5.0
+    
+    # Normalization
+    v7 = v6.normalize()
+    assert abs(v7.magnitude() - 1.0) < 1e-6
 
-class TestTrajectory:
-    """Test trajectory interpolation."""
+def test_scene_creation():
+    """Test scene creation and object management."""
+    scene = Scene(scene_id="test")
     
-    def test_trajectory_sampling(self):
-        """Test trajectory interpolation at different times."""
-        waypoints = [
-            Waypoint(t=0.0, x=0.0, y=0.0, v=1.0),
-            Waypoint(t=1.0, x=1.0, y=0.0, v=1.0),
-            Waypoint(t=2.0, x=2.0, y=1.0, v=1.0),
-        ]
-        traj = Trajectory(waypoints=waypoints)
-        
-        # Test at waypoint times
-        x, y, v = traj.sample_at(0.0)
-        assert (x, y, v) == (0.0, 0.0, 1.0)
-        
-        x, y, v = traj.sample_at(1.0)
-        assert (x, y, v) == (1.0, 0.0, 1.0)
-        
-        # Test interpolation
-        x, y, v = traj.sample_at(0.5)
-        assert (x, y, v) == (0.5, 0.0, 1.0)
-        
-        x, y, v = traj.sample_at(1.5)
-        assert (x, y, v) == (1.5, 0.5, 1.0)
+    # Add objects
+    obj1 = SceneObject(
+        id="obj1",
+        object_type=ObjectType.VEHICLE,
+        position=Vector3D(0, 0, 0)
+    )
+    scene.add_object(obj1)
     
-    def test_trajectory_edge_cases(self):
-        """Test trajectory sampling edge cases."""
-        waypoints = [
-            Waypoint(t=1.0, x=10.0, y=5.0, v=2.0),
-            Waypoint(t=2.0, x=20.0, y=5.0, v=2.0),
-        ]
-        traj = Trajectory(waypoints=waypoints)
-        
-        # Before first waypoint
-        x, y, v = traj.sample_at(0.0)
-        assert (x, y, v) == (10.0, 5.0, 2.0)
-        
-        # After last waypoint  
-        x, y, v = traj.sample_at(3.0)
-        assert (x, y, v) == (20.0, 5.0, 2.0)
+    assert len(scene.objects) == 1
+    assert scene.get_object("obj1") == obj1
+    
+    # Remove object
+    removed = scene.remove_object("obj1")
+    assert removed == obj1
+    assert len(scene.objects) == 0
 
-class TestSimulation:
-    """Test simulation mechanics."""
+def test_simulation_basic():
+    """Test basic simulation functionality."""
+    scene = Scene(scene_id="sim_test")
     
-    def create_test_scene(self):
-        """Create simple test scenario."""
-        road = RoadConfiguration(width=7.0, n_ego_lanes=1, n_opposite_lanes=1)
-        scene = Scene(id="test", road=road, duration=2.0)
-        
-        # Ego agent (straight line)
-        ego_traj = Trajectory(waypoints=[
-            Waypoint(t=0.0, x=0.0, y=road.get_lane_center_y(0), v=10.0),
-            Waypoint(t=2.0, x=20.0, y=road.get_lane_center_y(0), v=10.0),
-        ])
-        ego = Agent("ego", AgentType.EGO, ego_traj, length=4.0, width=2.0)
-        scene.add_agent(ego)
-        
-        return scene
+    # Add moving object
+    obj = SceneObject(
+        id="moving",
+        object_type=ObjectType.VEHICLE,
+        position=Vector3D(0, 0, 0),
+        velocity=Vector3D(1, 0, 0)
+    )
+    scene.add_object(obj)
     
-    def test_simulation_basic(self):
-        """Test basic simulation functionality."""
-        scene = self.create_test_scene()
-        sim = ADSimulator(scene, dt=0.1, enable_metrics=False)
-        
-        log = sim.run()
-        
-        # Check simulation ran
-        assert len(log.states) > 0
-        assert log.scene_id == "test"
-        assert log.duration > 0
-        
-        # Check ego motion
-        first_state = log.states[0]
-        last_state = log.states[-1]
-        
-        ego_start = first_state.agents["ego"]
-        ego_end = last_state.agents["ego"]
-        
-        # Ego should move forward
-        assert ego_end['x'] > ego_start['x']
-        assert ego_end['y'] == ego_start['y']  # Straight line
+    # Run simulation
+    simulator = Simulator(scene, enable_physics=False)
+    result = simulator.run(duration=2.0)
     
-    def test_deterministic_simulation(self):
-        """Test simulation determinism."""
-        scene = self.create_test_scene()
-        
-        # Run twice with same seed
-        sim1 = ADSimulator(scene, dt=0.1, random_seed=42)
-        sim2 = ADSimulator(scene, dt=0.1, random_seed=42)
-        
-        log1 = sim1.run()
-        log2 = sim2.run()
-        
-        # Results should be identical
-        assert len(log1.states) == len(log2.states)
-        
-        for state1, state2 in zip(log1.states, log2.states):
-            assert state1.time == state2.time
-            for agent_id in state1.agents:
-                s1 = state1.agents[agent_id]
-                s2 = state2.agents[agent_id]
-                assert s1['x'] == s2['x']
-                assert s1['y'] == s2['y']
+    assert len(result.frames) > 0
+    assert result.total_time >= 2.0
+    
+    # Check object moved
+    first_frame = result.frames[0]
+    last_frame = result.frames[-1]
+    
+    first_pos = first_frame.objects["moving"]["position"]
+    last_pos = last_frame.objects["moving"]["position"]
+    
+    assert last_pos[0] > first_pos[0]  # Object moved in x direction
 
-class TestPerturbations:
-    """Test perturbation operators."""
+def test_perturbations():
+    """Test scene perturbation system."""
+    scene = Scene(scene_id="perturb_test")
     
-    def create_test_scene_with_ped(self):
-        """Create test scene with pedestrian.""" 
-        road = RoadConfiguration(width=7.0, n_ego_lanes=1, n_opposite_lanes=1)
-        scene = Scene(id="test", road=road, duration=5.0)
-        
-        # Ego
-        ego_traj = Trajectory(waypoints=[
-            Waypoint(t=0.0, x=0.0, y=road.get_lane_center_y(0), v=10.0),
-            Waypoint(t=5.0, x=50.0, y=road.get_lane_center_y(0), v=10.0),
-        ])
-        ego = Agent("ego", AgentType.EGO, ego_traj)
-        scene.add_agent(ego)
-        
-        # Pedestrian crossing
-        ped_traj = Trajectory(waypoints=[
-            Waypoint(t=1.0, x=15.0, y=road.get_lane_center_y(-1), v=1.5),
-            Waypoint(t=3.0, x=15.0, y=road.get_lane_center_y(0), v=1.5),
-        ])
-        ped = Agent("ped_0", AgentType.PEDESTRIAN, ped_traj, length=0.6, width=0.6)
-        scene.add_agent(ped)
-        
-        return scene
+    obj = SceneObject(
+        id="test_obj",
+        object_type=ObjectType.PERSON,
+        position=Vector3D(0, 0, 0)
+    )
+    scene.add_object(obj)
     
-    def test_temporal_shift(self):
-        """Test time delay perturbation."""
-        scene = self.create_test_scene_with_ped()
-        perturb = PerturbationEngine()
-        
-        # Apply 1 second delay
-        delayed = perturb.temporal_shift(scene, "ped_0", delay=1.0)
-        
-        # Check pedestrian timing shifted
-        orig_times = [wp.t for wp in scene.agents["ped_0"].trajectory.waypoints]
-        new_times = [wp.t for wp in delayed.agents["ped_0"].trajectory.waypoints]
-        
-        for orig_t, new_t in zip(orig_times, new_times):
-            assert new_t == orig_t + 1.0
+    engine = PerturbationEngine()
     
-    def test_speed_scaling(self):
-        """Test speed scaling perturbation."""
-        scene = self.create_test_scene_with_ped()
-        perturb = PerturbationEngine()
-        
-        # Apply 2x speed scaling
-        fast = perturb.speed_scaling(scene, "ped_0", scale_factor=2.0)
-        
-        # Check speeds scaled
-        orig_speeds = [wp.v for wp in scene.agents["ped_0"].trajectory.waypoints]
-        new_speeds = [wp.v for wp in fast.agents["ped_0"].trajectory.waypoints]
-        
-        for orig_v, new_v in zip(orig_speeds, new_speeds):
-            assert abs(new_v - orig_v * 2.0) < 1e-6
+    # Test translation
+    translated = engine.translate_object(scene, "test_obj", Vector3D(1, 2, 3))
+    new_pos = translated.get_object("test_obj").position
     
-    def test_lateral_nudge(self):
-        """Test lateral offset perturbation."""
-        scene = self.create_test_scene_with_ped()
-        perturb = PerturbationEngine()
+    assert new_pos.x == 1 and new_pos.y == 2 and new_pos.z == 3
+    
+    # Test scaling
+    scaled = engine.scale_object(scene, "test_obj", 2.0)
+    new_scale = scaled.get_object("test_obj").scale
+    
+    assert new_scale.x == 2.0 and new_scale.y == 2.0 and new_scale.z == 2.0
+
+def test_scene_serialization():
+    """Test scene saving and loading."""
+    import tempfile
+    import os
+    
+    # Create scene
+    scene = Scene(scene_id="serialize_test")
+    obj = SceneObject(
+        id="test",
+        object_type=ObjectType.BUILDING,
+        position=Vector3D(5, 10, 15),
+        confidence=0.95
+    )
+    scene.add_object(obj)
+    
+    # Save to temporary file
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as tmp:
+        scene.save(tmp.name)
+        tmp_path = tmp.name
+    
+    try:
+        # Load from file
+        loaded_scene = Scene.load(tmp_path)
         
-        # Apply 0.5m left nudge
-        nudged = perturb.lateral_nudge(scene, "ped_0", offset=0.5)
+        assert loaded_scene.id == scene.id
+        assert len(loaded_scene.objects) == 1
         
-        # Check positions shifted
-        orig_positions = [(wp.x, wp.y) for wp in scene.agents["ped_0"].trajectory.waypoints]
-        new_positions = [(wp.x, wp.y) for wp in nudged.agents["ped_0"].trajectory.waypoints]
+        loaded_obj = loaded_scene.get_object("test")
+        assert loaded_obj.object_type == ObjectType.BUILDING
+        assert loaded_obj.position.x == 5
+        assert loaded_obj.confidence == 0.95
         
-        for (orig_x, orig_y), (new_x, new_y) in zip(orig_positions, new_positions):
-            assert new_x == orig_x  # x unchanged
-            assert abs(new_y - (orig_y + 0.5)) < 1e-6  # y shifted
+    finally:
+        os.unlink(tmp_path)
 
 if __name__ == "__main__":
     pytest.main([__file__])
