@@ -165,4 +165,102 @@ class MetricsCalculator:
                     object_lifetimes[obj_id][1] = frame.time
         
         lifetimes = [end - start for start, end in object_lifetimes.values()]
-        avg_persistence = np.mean()
+        avg_persistence = np.mean(lifetimes) if lifetimes else 0.0
+        
+        # Simulation stability (variance in frame metrics)
+        frame_metrics = [frame.metrics.get('avg_velocity', 0) for frame in frames]
+        stability = 1.0 / (1.0 + np.var(frame_metrics)) if frame_metrics else 1.0
+        
+        # Frame rate
+        frame_rate = len(frames) / result.wall_clock_time if result.wall_clock_time > 0 else 0.0
+        
+        return SimulationMetrics(
+            total_collisions=total_collisions,
+            collision_rate=collision_rate,
+            average_velocity=avg_velocity,
+            max_velocity=max_velocity,
+            object_persistence=avg_persistence,
+            simulation_stability=stability,
+            frame_rate=frame_rate
+        )
+    
+    def compare_scenes(self, scene1: Scene, scene2: Scene) -> Dict[str, float]:
+        """Compare two scenes and return similarity metrics."""
+        metrics1 = self.calculate_scene_metrics(scene1)
+        metrics2 = self.calculate_scene_metrics(scene2)
+        
+        # Object count similarity
+        count_diff = abs(metrics1.object_count - metrics2.object_count)
+        count_similarity = 1.0 / (1.0 + count_diff)
+        
+        # Diversity similarity
+        diversity_diff = abs(metrics1.object_diversity - metrics2.object_diversity)
+        diversity_similarity = 1.0 / (1.0 + diversity_diff)
+        
+        # Spatial similarity
+        spatial_diff = abs(metrics1.spatial_distribution - metrics2.spatial_distribution)
+        spatial_similarity = 1.0 / (1.0 + spatial_diff / 100.0)
+        
+        # Overall similarity
+        overall_similarity = (count_similarity + diversity_similarity + spatial_similarity) / 3.0
+        
+        return {
+            'overall_similarity': overall_similarity,
+            'object_count_similarity': count_similarity,
+            'diversity_similarity': diversity_similarity,
+            'spatial_similarity': spatial_similarity,
+            'metrics1': metrics1.__dict__,
+            'metrics2': metrics2.__dict__
+        }
+    
+    def generate_report(self, scene: Scene, simulation_result: Optional[SimulationResult] = None) -> Dict[str, Any]:
+        """Generate comprehensive analysis report."""
+        scene_metrics = self.calculate_scene_metrics(scene)
+        
+        report = {
+            'scene_id': scene.id,
+            'source_path': scene.source_path,
+            'scene_metrics': scene_metrics.__dict__,
+            'analysis_metadata': scene.analysis_metadata,
+            'timestamp': scene.analysis_metadata.get('timestamp'),
+            'objects': {
+                obj.id: {
+                    'type': obj.object_type.value,
+                    'position': [obj.position.x, obj.position.y, obj.position.z],
+                    'confidence': obj.confidence,
+                    'metadata': obj.metadata
+                } for obj in scene.objects.values()
+            }
+        }
+        
+        if simulation_result:
+            sim_metrics = self.calculate_simulation_metrics(simulation_result)
+            report['simulation_metrics'] = sim_metrics.__dict__
+            report['simulation_summary'] = {
+                'total_frames': len(simulation_result.frames),
+                'simulated_time': simulation_result.total_time,
+                'wall_clock_time': simulation_result.wall_clock_time,
+                'real_time_factor': simulation_result.total_time / simulation_result.wall_clock_time if simulation_result.wall_clock_time > 0 else 0
+            }
+        
+        return report
+    
+    def export_metrics_csv(self, scenes: List[Scene], filepath: str):
+        """Export scene metrics to CSV file."""
+        try:
+            import pandas as pd
+        except ImportError:
+            raise ImportError("pandas required for CSV export")
+        
+        rows = []
+        for scene in scenes:
+            metrics = self.calculate_scene_metrics(scene)
+            row = {
+                'scene_id': scene.id,
+                'source_path': scene.source_path,
+                **metrics.__dict__
+            }
+            rows.append(row)
+        
+        df = pd.DataFrame(rows)
+        df.to_csv(filepath, index=False)
