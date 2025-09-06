@@ -1,66 +1,96 @@
-#!/usr/bin/env python3
 """
-Basic AD-SimLite demonstration.
+Basic Scene2Sim demonstration script.
 """
 import sys
 from pathlib import Path
 
-# Add parent directory to path for imports
+# Add scene2sim to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from adsimlite.io.json_adapter import load_scenario
-from adsimlite.core.simulator import ADSimulator
-from adsimlite.core.perturbations import PerturbationEngine
+from scene2sim import Scene, SceneObject, Vector3D, ObjectType, Simulator, load_image
+from scene2sim.core.perturbations import PerturbationEngine
+from scene2sim.analysis.metrics import MetricsCalculator
 
 def main():
-    """Run basic demonstration."""
+    print("Scene2Sim Basic Demo")
+    print("=" * 50)
     
-    # Load scenario
-    print("Loading scenario...")
-    try:
-        scene = load_scenario("examples/scenarios.json", "psi-0001")
-        print(f"Loaded scenario '{scene.id}' with {len(scene.agents)} agents")
-    except Exception as e:
-        print(f"Error loading scenario: {e}")
-        return
+    # Create a simple scene manually
+    scene = Scene(scene_id="demo_basic")
     
-    # Run baseline simulation
-    print("\nRunning baseline simulation...")
-    sim = ADSimulator(scene, dt=0.05)
-    log = sim.run(headless=True)
+    # Add ground plane
+    ground = SceneObject(
+        id="ground",
+        object_type=ObjectType.GROUND,
+        position=Vector3D(0, -1, 0),
+        scale=Vector3D(20, 0.1, 20)
+    )
+    ground.physics.is_static = True
+    scene.add_object(ground)
     
-    print(f"Simulation completed in {log.duration:.3f}s")
-    print("Safety metrics:")
-    for key, value in log.metrics.items():
-        if isinstance(value, float):
-            print(f"  {key}: {value:.3f}")
-        else:
-            print(f"  {key}: {value}")
+    # Add a moving vehicle
+    vehicle = SceneObject(
+        id="car1",
+        object_type=ObjectType.VEHICLE,
+        position=Vector3D(-5, 0, 0),
+        velocity=Vector3D(2, 0, 0),
+        scale=Vector3D(4, 1.5, 2)
+    )
+    scene.add_object(vehicle)
     
-    # Run with perturbations
-    print("\nTesting perturbations...")
+    # Add a person
+    person = SceneObject(
+        id="person1",
+        object_type=ObjectType.PERSON,
+        position=Vector3D(3, 0, 2),
+        velocity=Vector3D(-0.5, 0, -0.3),
+        scale=Vector3D(0.6, 1.8, 0.6)
+    )
+    scene.add_object(person)
+    
+    print(f"Created scene with {len(scene.objects)} objects")
+    
+    # Calculate scene metrics
+    calculator = MetricsCalculator()
+    metrics = calculator.calculate_scene_metrics(scene)
+    
+    print(f"\nScene Metrics:")
+    print(f"  Objects: {metrics.object_count}")
+    print(f"  Diversity: {metrics.object_diversity:.2f}")
+    print(f"  Complexity: {metrics.scene_complexity:.2f}")
+    
+    # Run simulation
+    print(f"\nRunning simulation...")
+    simulator = Simulator(scene, enable_physics=True, enable_collisions=True)
+    
+    result = simulator.run(duration=5.0)
+    
+    print(f"Simulation completed:")
+    print(f"  Duration: {result.total_time:.2f}s")
+    print(f"  Frames: {len(result.frames)}")
+    print(f"  Wall time: {result.wall_clock_time:.2f}s")
+    print(f"  Collisions: {result.final_metrics.get('total_collisions', 0)}")
+    
+    # Test perturbations
+    print(f"\nTesting perturbations...")
     perturb_engine = PerturbationEngine()
     
-    # Time delay perturbation
-    delayed_scene = perturb_engine.temporal_shift(scene, "ped_0", delay=1.0)
-    delayed_log = ADSimulator(delayed_scene).run(headless=True)
+    # Create variants
+    variants = perturb_engine.create_scenario_variants(scene, n_variants=3)
     
-    print(f"With 1s delay - Collisions: {delayed_log.metrics.get('n_collisions', 0)}")
+    for i, variant in enumerate(variants):
+        print(f"  Variant {i+1}: {len(variant.objects)} objects")
     
-    # Speed scaling perturbation  
-    fast_scene = perturb_engine.speed_scaling(scene, "ped_0", scale_factor=1.5)
-    fast_log = ADSimulator(fast_scene).run(headless=True)
+    # Save scene
+    output_path = Path("demo_scene.json")
+    scene.save(str(output_path))
+    print(f"\nScene saved to: {output_path}")
     
-    print(f"With 1.5x speed - Collisions: {fast_log.metrics.get('n_collisions', 0)}")
+    # Test loading
+    loaded_scene = Scene.load(str(output_path))
+    print(f"Loaded scene: {loaded_scene.id} with {len(loaded_scene.objects)} objects")
     
-    # Export results
-    print("\nExporting results...")
-    try:
-        df = log.to_dataframe()
-        df.to_csv("baseline_simulation.csv", index=False)
-        print("Saved baseline_simulation.csv")
-    except ImportError:
-        print("Install pandas to export CSV results")
+    print(f"\nDemo completed successfully!")
 
 if __name__ == "__main__":
     main()
