@@ -131,6 +131,62 @@ graph LR
     F --> H[Real-time Analysis]
     G --> I[Publications]
 ```
+</div>
+
+---
+
+## **Detailed System Architecture**
+
+<div align="center">
+
+```mermaid
+graph TB
+    subgraph "Input Processing"
+        A[Images/Videos] --> B[Computer Vision Pipeline]
+        C[Existing 3D Data] --> D[Scene Loader]
+    end
+    
+    subgraph "Scene Understanding"
+        B --> E[Object Detection]
+        B --> F[Depth Estimation] 
+        B --> G[Motion Analysis]
+        E --> H[3D Scene Reconstruction]
+        F --> H
+        G --> H
+        D --> H
+    end
+    
+    subgraph "Simulation Engine"
+        H --> I[Physics Engine]
+        H --> J[Collision Detection]
+        H --> K[Motion Controller]
+        I --> L[Real-time Simulation]
+        J --> L
+        K --> L
+    end
+    
+    subgraph "Analysis & Perturbation"
+        L --> M[Metrics Calculator]
+        H --> N[Perturbation Engine]
+        N --> I
+        M --> O[Safety Analysis]
+    end
+    
+    subgraph "Output & Visualization"
+        L --> P[2D Pygame Renderer]
+        L --> Q[3D Web Viewer]
+        L --> R[Data Export]
+        O --> S[Research Outputs]
+        P --> T[Interactive Visualization]
+        Q --> T
+    end
+    
+    style H fill:#e1f5fe
+    style L fill:#f3e5f5
+    style T fill:#e8f5e8
+```
+
+
 
 </div>
 
