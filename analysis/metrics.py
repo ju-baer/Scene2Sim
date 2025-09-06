@@ -165,6 +165,4 @@ class MetricsCalculator:
                     object_lifetimes[obj_id][1] = frame.time
         
         lifetimes = [end - start for start, end in object_lifetimes.values()]
-        avg_persistence = np.mean(# Scene2Sim: Complete Repository Implementation
-
-## Project Structure
+        avg_persistence = np.mean()
